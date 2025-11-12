@@ -1,10 +1,8 @@
 // Fungsi Perhitungan SAW
 export const hitungSAW = (data, bobot) => {
   const normalized = data.map(kos => {
-    const maxHarga = Math.max(...data.map(k => k.harga));
     const minHarga = Math.min(...data.map(k => k.harga));
     const maxFasilitas = Math.max(...data.map(k => k.fasilitas));
-    const maxWaktu = Math.max(...data.map(k => k.waktuTempuh));
     const minWaktu = Math.min(...data.map(k => k.waktuTempuh));
     const maxLuas = Math.max(...data.map(k => k.luasKamar));
     const maxKeamanan = Math.max(...data.map(k => k.keamanan));
