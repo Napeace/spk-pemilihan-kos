@@ -1,33 +1,37 @@
 import React from 'react';
-import { defaultBobot } from '../data/initialData';
 
-const HasilPerhitungan = ({ hasilData, onNavigate }) => {
+const HasilPerhitungan = ({ hasilData, onNavigate, bobot }) => {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Hasil Perhitungan</h2>
       
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h3 className="text-lg font-semibold mb-4">Bobot Kriteria</h3>
+        <h3 className="text-lg font-semibold mb-4">⚖️ Bobot Kriteria yang Digunakan</h3>
         <div className="grid grid-cols-5 gap-4 text-sm">
           <div className="text-center">
             <p className="font-medium">Harga</p>
-            <p className="text-2xl font-bold text-blue-600">{defaultBobot.harga}</p>
+            <p className="text-2xl font-bold text-blue-600">{(bobot.harga * 100).toFixed(0)}%</p>
+            <p className="text-xs text-gray-500">Cost</p>
           </div>
           <div className="text-center">
             <p className="font-medium">Fasilitas</p>
-            <p className="text-2xl font-bold text-blue-600">{defaultBobot.fasilitas}</p>
+            <p className="text-2xl font-bold text-blue-600">{(bobot.fasilitas * 100).toFixed(0)}%</p>
+            <p className="text-xs text-gray-500">Benefit</p>
           </div>
           <div className="text-center">
             <p className="font-medium">Waktu Tempuh</p>
-            <p className="text-2xl font-bold text-blue-600">{defaultBobot.waktuTempuh}</p>
+            <p className="text-2xl font-bold text-blue-600">{(bobot.waktuTempuh * 100).toFixed(0)}%</p>
+            <p className="text-xs text-gray-500">Cost</p>
           </div>
           <div className="text-center">
             <p className="font-medium">Luas Kamar</p>
-            <p className="text-2xl font-bold text-blue-600">{defaultBobot.luasKamar}</p>
+            <p className="text-2xl font-bold text-blue-600">{(bobot.luasKamar * 100).toFixed(0)}%</p>
+            <p className="text-xs text-gray-500">Benefit</p>
           </div>
           <div className="text-center">
             <p className="font-medium">Keamanan</p>
-            <p className="text-2xl font-bold text-blue-600">{defaultBobot.keamanan}</p>
+            <p className="text-2xl font-bold text-blue-600">{(bobot.keamanan * 100).toFixed(0)}%</p>
+            <p className="text-xs text-gray-500">Benefit</p>
           </div>
         </div>
       </div>
@@ -64,15 +68,15 @@ const HasilPerhitungan = ({ hasilData, onNavigate }) => {
       <div className="flex gap-4">
         <button
           onClick={() => onNavigate('perbandingan')}
-          className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 font-semibold"
+          className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 font-semibold transition"
         >
-          Lihat Perbandingan
+          📊 Lihat Perbandingan
         </button>
         <button
           onClick={() => onNavigate('input')}
-          className="bg-gray-600 text-white px-6 py-3 rounded-md hover:bg-gray-700 font-semibold"
+          className="bg-gray-600 text-white px-6 py-3 rounded-md hover:bg-gray-700 font-semibold transition"
         >
-          Kembali ke Data Kos
+          ← Kembali ke Data Kos
         </button>
       </div>
     </div>

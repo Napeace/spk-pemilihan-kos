@@ -10,14 +10,21 @@ const App = () => {
   const [page, setPage] = useState('input');
   const [kosData, setKosData] = useState([]);
   const [hasilData, setHasilData] = useState([]);
+  const [bobot, setBobot] = useState(defaultBobot);
 
   useEffect(() => {
     const saved = localStorage.getItem('kosData');
+    const savedBobot = localStorage.getItem('bobot');
+    
     if (saved) {
       setKosData(JSON.parse(saved));
     } else {
       setKosData(initialKosData);
       localStorage.setItem('kosData', JSON.stringify(initialKosData));
+    }
+
+    if (savedBobot) {
+      setBobot(JSON.parse(savedBobot));
     }
   }, []);
 
@@ -34,10 +41,15 @@ const App = () => {
     localStorage.setItem('kosData', JSON.stringify(updated));
   };
 
+  const handleBobotChange = (newBobot) => {
+    setBobot(newBobot);
+    localStorage.setItem('bobot', JSON.stringify(newBobot));
+  };
+
   const handleNavigate = (targetPage) => {
     if (targetPage === 'hasil') {
-      const saw = hitungSAW(kosData, defaultBobot);
-      const topsis = hitungTOPSIS(kosData, defaultBobot);
+      const saw = hitungSAW(kosData, bobot);
+      const topsis = hitungTOPSIS(kosData, bobot);
       
       const sawSorted = [...saw].sort((a, b) => b.sawScore - a.sawScore);
       const topsisSorted = [...topsis].sort((a, b) => b.topsisScore - a.topsisScore);
@@ -70,6 +82,8 @@ const App = () => {
             onAddKos={handleAddKos}
             onDeleteKos={handleDeleteKos}
             onNavigate={handleNavigate}
+            bobot={bobot}
+            onBobotChange={handleBobotChange}
           />
         )}
 
@@ -77,6 +91,7 @@ const App = () => {
           <HasilPerhitungan 
             hasilData={hasilData}
             onNavigate={handleNavigate}
+            bobot={bobot}
           />
         )}
 
