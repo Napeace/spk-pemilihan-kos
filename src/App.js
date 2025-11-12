@@ -68,7 +68,14 @@ const App = () => {
 
       setHasilData(combined);
     }
+    
     setPage(targetPage);
+    
+    // Smooth scroll ke atas
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   return (
