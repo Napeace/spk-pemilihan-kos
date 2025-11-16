@@ -1,37 +1,28 @@
 import React from 'react';
-import { hitungMSE } from '../utils/calculations';
 
 const HasilPerhitungan = ({ hasilData, onNavigate, bobot }) => {
-  // Hitung MSE untuk menentukan bobot masing-masing metode
+  // Hitung MSE untuk menentukan metode terbaik
+  const hitungMSE = (data, metode) => {
+    const scores = data.map(d => metode === 'SAW' ? d.sawScore : d.topsisScore);
+    const mean = scores.reduce((sum, s) => sum + s, 0) / scores.length;
+    const mse = scores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) / scores.length;
+    return mse;
+  };
+
   const mseSAW = hitungMSE(hasilData, 'SAW');
   const mseTOPSIS = hitungMSE(hasilData, 'TOPSIS');
   
-  // MSE lebih kecil = lebih akurat = bobot lebih besar
-  // Gunakan inverse MSE untuk bobot (1/MSE)
-  const inverseMseSAW = 1 / mseSAW;
-  const inverseMseTOPSIS = 1 / mseTOPSIS;
-  const totalInverse = inverseMseSAW + inverseMseTOPSIS;
-  
-  // Normalisasi bobot (total = 1)
-  const bobotSAW = inverseMseSAW / totalInverse;
-  const bobotTOPSIS = inverseMseTOPSIS / totalInverse;
-
-  // Hitung Final Score untuk setiap kos
-  const hasilWithFinalScore = hasilData.map(kos => ({
-    ...kos,
-    finalScore: (kos.sawScore * bobotSAW) + (kos.topsisScore * bobotTOPSIS)
-  }));
-
-  // Sort berdasarkan Final Score (descending)
-  const sortedData = [...hasilWithFinalScore].sort((a, b) => b.finalScore - a.finalScore);
-
-  // Tambahkan Ranking Final
-  const finalData = sortedData.map((kos, idx) => ({
-    ...kos,
-    rankingFinal: idx + 1
-  }));
-
+  // Tentukan metode terbaik (MSE terkecil)
   const metodeTerbaik = mseSAW < mseTOPSIS ? 'SAW' : 'TOPSIS';
+  
+  // Sort berdasarkan ranking metode terbaik (ascending)
+  const sortedData = [...hasilData].sort((a, b) => {
+    if (metodeTerbaik === 'SAW') {
+      return a.rankSAW - b.rankSAW;
+    } else {
+      return a.rankTOPSIS - b.rankTOPSIS;
+    }
+  });
 
   return (
     <div>
@@ -68,31 +59,25 @@ const HasilPerhitungan = ({ hasilData, onNavigate, bobot }) => {
         </div>
       </div>
 
-      {/* Info Bobot Metode Berdasarkan MSE */}
-      <div className="bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-purple-500 p-4 rounded-lg mb-6">
-        <h4 className="font-semibold text-purple-900 mb-2">🎯 Perhitungan Ranking Final Berdasarkan MSE</h4>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-700">
-              <strong>MSE SAW:</strong> {mseSAW.toFixed(6)}
-            </p>
-            <p className="text-gray-700">
-              <strong>Bobot SAW:</strong> <span className="text-blue-600 font-semibold">{(bobotSAW * 100).toFixed(1)}%</span>
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-700">
-              <strong>MSE TOPSIS:</strong> {mseTOPSIS.toFixed(6)}
-            </p>
-            <p className="text-gray-700">
-              <strong>Bobot TOPSIS:</strong> <span className="text-green-600 font-semibold">{(bobotTOPSIS * 100).toFixed(1)}%</span>
-            </p>
-          </div>
-        </div>
-        <p className="text-xs text-gray-600 mt-3 pt-3 border-t">
-          💡 <strong>Rumus Final Score:</strong> (SAW Score × {(bobotSAW * 100).toFixed(1)}%) + (TOPSIS Score × {(bobotTOPSIS * 100).toFixed(1)}%)
-          <br />
-          Metode dengan MSE lebih kecil mendapat bobot lebih besar dalam perhitungan final.
+      {/* Info Banner Metode Terbaik */}
+      <div className={`border-l-4 p-4 rounded-lg mb-6 ${
+        metodeTerbaik === 'SAW' 
+          ? 'bg-blue-50 border-blue-500' 
+          : 'bg-green-50 border-green-500'
+      }`}>
+        <h4 className={`font-semibold mb-2 ${
+          metodeTerbaik === 'SAW' ? 'text-blue-900' : 'text-green-900'
+        }`}>
+          🏆 Urutan Berdasarkan Metode Terbaik
+        </h4>
+        <p className="text-sm text-gray-700">
+          Data diurutkan berdasarkan <strong>Rank {metodeTerbaik}</strong> karena metode {metodeTerbaik} memiliki nilai MSE lebih kecil 
+          ({metodeTerbaik === 'SAW' ? mseSAW.toFixed(6) : mseTOPSIS.toFixed(6)}) 
+          dibanding metode {metodeTerbaik === 'SAW' ? 'TOPSIS' : 'SAW'} 
+          ({metodeTerbaik === 'SAW' ? mseTOPSIS.toFixed(6) : mseSAW.toFixed(6)}).
+        </p>
+        <p className="text-xs text-gray-600 mt-2">
+          💡 MSE lebih kecil = hasil ranking lebih konsisten dan akurat.
         </p>
       </div>
 
@@ -107,36 +92,22 @@ const HasilPerhitungan = ({ hasilData, onNavigate, bobot }) => {
                 <th className="px-4 py-2 border">TOPSIS Score</th>
                 <th className="px-4 py-2 border">Rank SAW</th>
                 <th className="px-4 py-2 border">Rank TOPSIS</th>
-                <th className="px-4 py-2 border bg-purple-50">Final Score</th>
-                <th className="px-4 py-2 border bg-yellow-50">
-                  <div className="flex items-center justify-center gap-1">
-                    <span>🏆 Ranking Final</span>
-                  </div>
-                </th>
               </tr>
             </thead>
             <tbody>
-              {finalData.map((kos, idx) => (
+              {sortedData.map((kos, idx) => (
                 <tr key={kos.id} className={idx < 3 ? 'bg-green-50' : 'hover:bg-gray-50'}>
                   <td className="px-4 py-2 border text-center">{idx + 1}</td>
-                  <td className="px-4 py-2 border font-medium">{kos.nama}</td>
+                  <td className="px-4 py-2 border font-medium">
+                    {kos.nama}
+                    {idx === 0 && <span className="ml-2 text-xl">🥇</span>}
+                    {idx === 1 && <span className="ml-2 text-xl">🥈</span>}
+                    {idx === 2 && <span className="ml-2 text-xl">🥉</span>}
+                  </td>
                   <td className="px-4 py-2 border text-center">{kos.sawScore.toFixed(4)}</td>
                   <td className="px-4 py-2 border text-center">{kos.topsisScore.toFixed(4)}</td>
                   <td className="px-4 py-2 border text-center font-semibold">{kos.rankSAW}</td>
                   <td className="px-4 py-2 border text-center font-semibold">{kos.rankTOPSIS}</td>
-                  <td className="px-4 py-2 border text-center bg-purple-50 font-semibold text-purple-700">
-                    {kos.finalScore.toFixed(4)}
-                  </td>
-                  <td className="px-4 py-2 border text-center bg-yellow-50">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-2xl font-bold text-yellow-600">
-                        #{kos.rankingFinal}
-                      </span>
-                      {idx === 0 && <span className="text-xl">🥇</span>}
-                      {idx === 1 && <span className="text-xl">🥈</span>}
-                      {idx === 2 && <span className="text-xl">🥉</span>}
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -150,9 +121,8 @@ const HasilPerhitungan = ({ hasilData, onNavigate, bobot }) => {
         <ul className="space-y-1 text-gray-700">
           <li>• <strong>SAW Score & Rank:</strong> Hasil perhitungan metode Simple Additive Weighting</li>
           <li>• <strong>TOPSIS Score & Rank:</strong> Hasil perhitungan metode TOPSIS</li>
-          <li>• <strong>Final Score:</strong> Kombinasi SAW dan TOPSIS dengan bobot berdasarkan akurasi MSE</li>
-          <li>• <strong>Ranking Final:</strong> Urutan kos terbaik berdasarkan Final Score (semakin besar semakin baik)</li>
-          <li>• Metode dengan MSE lebih kecil mendapat bobot lebih tinggi dalam Final Score</li>
+          <li>• Data diurutkan berdasarkan metode dengan MSE terkecil (paling akurat)</li>
+          <li>• Top 3 ditandai dengan highlight hijau dan medali 🥇🥈🥉</li>
         </ul>
       </div>
 
@@ -161,7 +131,7 @@ const HasilPerhitungan = ({ hasilData, onNavigate, bobot }) => {
           onClick={() => onNavigate('perbandingan')}
           className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 font-semibold transition"
         >
-          📊 Lihat Perbandingan
+          📊 Lihat Perbandingan MSE
         </button>
         <button
           onClick={() => onNavigate('input')}
