@@ -1,242 +1,233 @@
 import React, { useState } from 'react';
-import TableKos from '../components/TableKos';
+import { supabase } from '../lib/supabaseClient';
 import FormTambahKos from '../components/FormTambahKos';
+import TableKos from '../components/TableKos';
+import { hitungSAW, hitungTOPSIS } from '../utils/calculations';
 
 const InputKos = ({ kosData, onAddKos, onDeleteKos, onNavigate, bobot, onBobotChange }) => {
   const [showForm, setShowForm] = useState(false);
-  const [editBobot, setEditBobot] = useState(false);
-  const [tempBobot, setTempBobot] = useState({
-    harga: (bobot.harga * 100).toString(),
-    fasilitas: (bobot.fasilitas * 100).toString(),
-    waktuTempuh: (bobot.waktuTempuh * 100).toString(),
-    luasKamar: (bobot.luasKamar * 100).toString(),
-    keamanan: (bobot.keamanan * 100).toString()
-  });
+  const [editingBobot, setEditingBobot] = useState(false);
+  const [tempBobot, setTempBobot] = useState(bobot);
 
-  const handleAdd = (newKos) => {
-    onAddKos(newKos);
-    setShowForm(false);
-  };
+  const handleHitungSAW = () => {
+    if (kosData.length === 0) {
+      alert('❌ Tidak ada data kos! Tambahkan data kos terlebih dahulu.');
+      return;
+    }
 
-  const handleBobotChange = (key, value) => {
-    // Hanya izinkan angka dan satu titik desimal
-    const sanitized = value.replace(/[^\d.]/g, '');
-    // Hapus leading zeros kecuali untuk 0.x
-    const cleaned = sanitized.replace(/^0+(?=\d)/, '');
-    setTempBobot({
-      ...tempBobot,
-      [key]: cleaned
+    console.log('🧮 Menghitung SAW & TOPSIS...');
+    console.log('📊 Data Kos:', kosData);
+    console.log('⚖️ Bobot:', bobot);
+    
+    // Hitung SAW & TOPSIS
+    const sawResults = hitungSAW(kosData, bobot);
+    const topsisResults = hitungTOPSIS(kosData, bobot);
+    
+    console.log('📈 SAW Results:', sawResults);
+    console.log('📈 TOPSIS Results:', topsisResults);
+    
+    // Gabungkan hasil
+    const combined = kosData.map((kos) => {
+      const sawData = sawResults.find(s => s.id === kos.id);
+      const topsisData = topsisResults.find(t => t.id === kos.id);
+      
+      return {
+        ...kos,
+        sawScore: sawData?.sawScore || 0,
+        topsisScore: topsisData?.topsisScore || 0
+      };
     });
+    
+    // Tambahkan ranking
+    const sortedBySAW = [...combined].sort((a, b) => b.sawScore - a.sawScore);
+    const sortedByTOPSIS = [...combined].sort((a, b) => b.topsisScore - a.topsisScore);
+    
+    combined.forEach(kos => {
+      kos.rankSAW = sortedBySAW.findIndex(k => k.id === kos.id) + 1;
+      kos.rankTOPSIS = sortedByTOPSIS.findIndex(k => k.id === kos.id) + 1;
+    });
+    
+    console.log('✅ Perhitungan selesai!', combined);
+    
+    // Simpan ke sessionStorage
+    sessionStorage.setItem('hasilPerhitungan', JSON.stringify(combined));
+    
+    // Kirim hasil ke parent dengan data sebagai parameter kedua
+    if (onNavigate) {
+      onNavigate('hasil', combined);
+    }
   };
 
-  const totalBobot = Object.values(tempBobot).reduce((sum, val) => {
-    const num = parseFloat(val) || 0;
-    return sum + num;
-  }, 0);
+  const handleEditBobot = () => {
+    setEditingBobot(true);
+    setTempBobot({ ...bobot });
+  };
 
-  const handleSaveBobot = () => {
-    if (Math.abs(totalBobot - 100) < 0.01) {
-      onBobotChange({
-        harga: parseFloat(tempBobot.harga) / 100,
-        fasilitas: parseFloat(tempBobot.fasilitas) / 100,
-        waktuTempuh: parseFloat(tempBobot.waktuTempuh) / 100,
-        luasKamar: parseFloat(tempBobot.luasKamar) / 100,
-        keamanan: parseFloat(tempBobot.keamanan) / 100
-      });
-      setEditBobot(false);
-    } else {
-      alert(`Total bobot harus 100%! Saat ini: ${totalBobot.toFixed(1)}%`);
+  const handleSaveBobot = async () => {
+    // Validasi total harus 100%
+    const total = Object.values(tempBobot).reduce((sum, val) => sum + val, 0);
+    
+    if (Math.abs(total - 1.0) > 0.01) {
+      alert(`❌ Total bobot harus 100%!\nSaat ini: ${(total * 100).toFixed(1)}%`);
+      return;
+    }
+
+    try {
+      // Update ke Supabase
+      const { error } = await supabase
+        .from('bobot_kriteria')
+        .update({
+          harga: tempBobot.harga,
+          fasilitas: tempBobot.fasilitas,
+          luas_kamar: tempBobot.luasKamar,
+          keamanan: tempBobot.keamanan
+        })
+        .eq('id', 1);
+
+      if (error) throw error;
+
+      onBobotChange(tempBobot);
+      setEditingBobot(false);
+      alert('✅ Bobot kriteria berhasil diperbarui!');
+    } catch (error) {
+      console.error('Error updating bobot:', error);
+      alert('❌ Gagal update bobot: ' + error.message);
     }
   };
 
   const handleCancelBobot = () => {
+    setTempBobot({ ...bobot });
+    setEditingBobot(false);
+  };
+
+  const handleBobotChange = (key, value) => {
     setTempBobot({
-      harga: (bobot.harga * 100).toString(),
-      fasilitas: (bobot.fasilitas * 100).toString(),
-      waktuTempuh: (bobot.waktuTempuh * 100).toString(),
-      luasKamar: (bobot.luasKamar * 100).toString(),
-      keamanan: (bobot.keamanan * 100).toString()
+      ...tempBobot,
+      [key]: parseFloat(value)
     });
-    setEditBobot(false);
   };
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Data Kos</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-        >
-          {showForm ? 'Tutup Form' : '+ Tambah Kos'}
-        </button>
-      </div>
-
-      {showForm && (
-        <FormTambahKos 
-          onAdd={handleAdd} 
-          onCancel={() => setShowForm(false)} 
-        />
-      )}
-
-      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <TableKos data={kosData} onDelete={onDeleteKos} />
-      </div>
-
-      {/* Section Bobot Kriteria */}
+      {/* Bobot Kriteria Section */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">⚖️ Bobot Kriteria</h3>
-          {!editBobot && (
+          <h3 className="text-xl font-semibold">⚖️ Bobot Kriteria</h3>
+          {!editingBobot ? (
             <button
-              onClick={() => setEditBobot(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm transition"
+              onClick={handleEditBobot}
+              className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition"
             >
-              ✏️ Ubah Bobot
+              ✏️ Edit Bobot
             </button>
-          )}
-        </div>
-
-        {!editBobot ? (
-          // Mode Tampilan
-          <div className="grid grid-cols-5 gap-4">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Harga</p>
-              <p className="text-2xl font-bold text-blue-600">{(bobot.harga * 100).toFixed(0)}%</p>
-              <p className="text-xs text-gray-500 mt-1">Cost</p>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Fasilitas</p>
-              <p className="text-2xl font-bold text-blue-600">{(bobot.fasilitas * 100).toFixed(0)}%</p>
-              <p className="text-xs text-gray-500 mt-1">Benefit</p>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Waktu Tempuh</p>
-              <p className="text-2xl font-bold text-blue-600">{(bobot.waktuTempuh * 100).toFixed(0)}%</p>
-              <p className="text-xs text-gray-500 mt-1">Cost</p>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Luas Kamar</p>
-              <p className="text-2xl font-bold text-blue-600">{(bobot.luasKamar * 100).toFixed(0)}%</p>
-              <p className="text-xs text-gray-500 mt-1">Benefit</p>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Keamanan</p>
-              <p className="text-2xl font-bold text-blue-600">{(bobot.keamanan * 100).toFixed(0)}%</p>
-              <p className="text-xs text-gray-500 mt-1">Benefit</p>
-            </div>
-          </div>
-        ) : (
-          // Mode Edit
-          <div>
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-              <p className="text-sm text-yellow-800">
-                <strong>⚠️ Penting:</strong> Total bobot harus 100%. 
-                Saat ini: <strong className={Math.abs(totalBobot - 100) < 0.01 ? 'text-green-600' : 'text-red-600'}>
-                  {totalBobot.toFixed(1)}%
-                </strong>
-              </p>
-            </div>
-
-            <div className="grid grid-cols-5 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Harga (%)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={tempBobot.harga}
-                  onChange={(e) => handleBobotChange('harga', e.target.value)}
-                  placeholder="25"
-                />
-                <p className="text-xs text-gray-500 mt-1">Cost</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Fasilitas (%)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={tempBobot.fasilitas}
-                  onChange={(e) => handleBobotChange('fasilitas', e.target.value)}
-                  placeholder="20"
-                />
-                <p className="text-xs text-gray-500 mt-1">Benefit</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Waktu Tempuh (%)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={tempBobot.waktuTempuh}
-                  onChange={(e) => handleBobotChange('waktuTempuh', e.target.value)}
-                  placeholder="15"
-                />
-                <p className="text-xs text-gray-500 mt-1">Cost</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Luas Kamar (%)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={tempBobot.luasKamar}
-                  onChange={(e) => handleBobotChange('luasKamar', e.target.value)}
-                  placeholder="20"
-                />
-                <p className="text-xs text-gray-500 mt-1">Benefit</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Keamanan (%)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={tempBobot.keamanan}
-                  onChange={(e) => handleBobotChange('keamanan', e.target.value)}
-                  placeholder="20"
-                />
-                <p className="text-xs text-gray-500 mt-1">Benefit</p>
-              </div>
-            </div>
-
+          ) : (
             <div className="flex gap-2">
               <button
                 onClick={handleSaveBobot}
-                className={`px-4 py-2 rounded-md text-white transition ${
-                  Math.abs(totalBobot - 100) < 0.01
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
-                disabled={Math.abs(totalBobot - 100) >= 0.01}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
               >
-                💾 Simpan Bobot
+                ✅ Simpan
               </button>
               <button
                 onClick={handleCancelBobot}
-                className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400 transition"
+                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition"
               >
-                Batal
+                ❌ Batal
               </button>
             </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-4 gap-4">
+          {['harga', 'fasilitas', 'luasKamar', 'keamanan'].map((key) => {
+            const labels = {
+              harga: 'Harga',
+              fasilitas: 'Fasilitas',
+              luasKamar: 'Luas Kamar',
+              keamanan: 'Keamanan'
+            };
+            
+            return (
+              <div key={key} className="text-center">
+                <p className="font-medium text-gray-700 mb-2">{labels[key]}</p>
+                {editingBobot ? (
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    value={tempBobot[key]}
+                    onChange={(e) => handleBobotChange(key, e.target.value)}
+                    className="w-full text-center text-xl font-bold text-blue-600 border-2 border-blue-300 rounded px-2 py-1"
+                  />
+                ) : (
+                  <p className="text-2xl font-bold text-blue-600">
+                    {(bobot[key] * 100).toFixed(1)}%
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  {key === 'harga' ? 'Cost' : 'Benefit'}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {editingBobot && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-sm text-blue-800">
+              💡 <strong>Total Bobot:</strong> {(Object.values(tempBobot).reduce((sum, val) => sum + val, 0) * 100).toFixed(1)}% 
+              {Math.abs(Object.values(tempBobot).reduce((sum, val) => sum + val, 0) - 1.0) > 0.01 && 
+                <span className="text-red-600 ml-2">⚠️ Harus 100%!</span>
+              }
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Tombol Hitung SAW & TOPSIS */}
+      <div className="bg-gradient-to-r from-green-500 to-blue-500 p-6 rounded-lg shadow-lg mb-6 text-center">
+        <h3 className="text-white text-xl font-bold mb-3">
+          🧮 Hitung Rekomendasi Kos Terbaik
+        </h3>
+        <p className="text-white text-sm mb-4">
+          Gunakan metode SAW & TOPSIS untuk mendapatkan ranking kos terbaik
+        </p>
+        <button
+          onClick={handleHitungSAW}
+          className="bg-white text-blue-600 px-8 py-3 rounded-lg hover:bg-gray-100 font-bold text-lg shadow-md transition transform hover:scale-105"
+        >
+          📊 Hitung SAW & TOPSIS
+        </button>
+        <p className="text-white text-xs mt-3">
+          Total Data: <strong>{kosData.length} Kos</strong>
+        </p>
+      </div>
+
+      {/* Data Kos Section */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold">📋 Data Kos ({kosData.length})</h3>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className={`px-4 py-2 rounded-md font-semibold transition ${
+              showForm 
+                ? 'bg-red-500 text-white hover:bg-red-600' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {showForm ? '❌ Tutup Form' : '➕ Tambah Kos Baru'}
+          </button>
+        </div>
+
+        {showForm && (
+          <div className="mb-6">
+            <FormTambahKos onAddKos={onAddKos} onClose={() => setShowForm(false)} />
           </div>
         )}
 
-        <div className="mt-4 text-xs text-gray-600 bg-gray-50 p-3 rounded">
-          <p><strong>💡 Tip:</strong> Bobot menentukan seberapa penting setiap kriteria dalam pemilihan kos.</p>
-          <p className="mt-1">• <strong>Cost</strong> = Semakin rendah semakin baik (Harga, Waktu Tempuh)</p>
-          <p>• <strong>Benefit</strong> = Semakin tinggi semakin baik (Fasilitas, Luas Kamar, Keamanan)</p>
-        </div>
+        <TableKos kosData={kosData} onDeleteKos={onDeleteKos} />
       </div>
-
-      <button
-        onClick={() => onNavigate('hasil')}
-        className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 font-semibold transition"
-        disabled={kosData.length === 0}
-      >
-        🧮 Hitung SAW & TOPSIS
-      </button>
     </div>
   );
 };

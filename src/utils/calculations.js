@@ -1,84 +1,85 @@
-// Fungsi Perhitungan SAW
+import { konversiKosData } from './converter';
+
+// Fungsi Perhitungan SAW (4 Kriteria)
 export const hitungSAW = (data, bobot) => {
-  const normalized = data.map(kos => {
-    const minHarga = Math.min(...data.map(k => k.harga));
-    const maxFasilitas = Math.max(...data.map(k => k.fasilitas));
-    const minWaktu = Math.min(...data.map(k => k.waktuTempuh));
-    const maxLuas = Math.max(...data.map(k => k.luasKamar));
-    const maxKeamanan = Math.max(...data.map(k => k.keamanan));
+  // Konversi text ke numerik
+  const convertedData = konversiKosData(data);
+  
+  // Normalisasi
+  const normalized = convertedData.map(kos => {
+    const minHarga = Math.min(...convertedData.map(k => k.hargaNumerik));
+    const maxFasilitas = Math.max(...convertedData.map(k => k.fasilitasNumerik));
+    const maxLuas = Math.max(...convertedData.map(k => k.luasKamarNumerik));
+    const maxKeamanan = Math.max(...convertedData.map(k => k.keamananNumerik));
 
     return {
       ...kos,
-      normHarga: minHarga / kos.harga,
-      normFasilitas: kos.fasilitas / maxFasilitas,
-      normWaktu: minWaktu / kos.waktuTempuh,
-      normLuas: kos.luasKamar / maxLuas,
-      normKeamanan: kos.keamanan / maxKeamanan
+      normHarga: minHarga / kos.hargaNumerik, // Cost: min/x
+      normFasilitas: kos.fasilitasNumerik / maxFasilitas, // Benefit: x/max
+      normLuas: kos.luasKamarNumerik / maxLuas, // Benefit: x/max
+      normKeamanan: kos.keamananNumerik / maxKeamanan // Benefit: x/max
     };
   });
 
+  // Hitung SAW Score
   return normalized.map(kos => ({
     ...kos,
     sawScore: (
       kos.normHarga * bobot.harga +
       kos.normFasilitas * bobot.fasilitas +
-      kos.normWaktu * bobot.waktuTempuh +
       kos.normLuas * bobot.luasKamar +
       kos.normKeamanan * bobot.keamanan
     )
   }));
 };
 
-// Fungsi Perhitungan TOPSIS
+// Fungsi Perhitungan TOPSIS (4 Kriteria)
 export const hitungTOPSIS = (data, bobot) => {
-  const normalized = data.map(kos => {
-    const sumSquares = Math.sqrt(
-      data.reduce((sum, k) => sum + k.harga * k.harga, 0)
-    );
-    const sumSquaresFas = Math.sqrt(
-      data.reduce((sum, k) => sum + k.fasilitas * k.fasilitas, 0)
-    );
-    const sumSquaresWaktu = Math.sqrt(
-      data.reduce((sum, k) => sum + k.waktuTempuh * k.waktuTempuh, 0)
-    );
-    const sumSquaresLuas = Math.sqrt(
-      data.reduce((sum, k) => sum + k.luasKamar * k.luasKamar, 0)
-    );
-    const sumSquaresKeamanan = Math.sqrt(
-      data.reduce((sum, k) => sum + k.keamanan * k.keamanan, 0)
-    );
+  // Konversi text ke numerik
+  const convertedData = konversiKosData(data);
+  
+  // Normalisasi Euclidean
+  const sumSquaresHarga = Math.sqrt(
+    convertedData.reduce((sum, k) => sum + k.hargaNumerik * k.hargaNumerik, 0)
+  );
+  const sumSquaresFas = Math.sqrt(
+    convertedData.reduce((sum, k) => sum + k.fasilitasNumerik * k.fasilitasNumerik, 0)
+  );
+  const sumSquaresLuas = Math.sqrt(
+    convertedData.reduce((sum, k) => sum + k.luasKamarNumerik * k.luasKamarNumerik, 0)
+  );
+  const sumSquaresKeamanan = Math.sqrt(
+    convertedData.reduce((sum, k) => sum + k.keamananNumerik * k.keamananNumerik, 0)
+  );
 
-    return {
-      ...kos,
-      normHarga: (kos.harga / sumSquares) * bobot.harga,
-      normFasilitas: (kos.fasilitas / sumSquaresFas) * bobot.fasilitas,
-      normWaktu: (kos.waktuTempuh / sumSquaresWaktu) * bobot.waktuTempuh,
-      normLuas: (kos.luasKamar / sumSquaresLuas) * bobot.luasKamar,
-      normKeamanan: (kos.keamanan / sumSquaresKeamanan) * bobot.keamanan
-    };
-  });
+  const normalized = convertedData.map(kos => ({
+    ...kos,
+    normHarga: (kos.hargaNumerik / sumSquaresHarga) * bobot.harga,
+    normFasilitas: (kos.fasilitasNumerik / sumSquaresFas) * bobot.fasilitas,
+    normLuas: (kos.luasKamarNumerik / sumSquaresLuas) * bobot.luasKamar,
+    normKeamanan: (kos.keamananNumerik / sumSquaresKeamanan) * bobot.keamanan
+  }));
 
+  // Ideal Positif & Negatif
   const idealPositif = {
-    harga: Math.min(...normalized.map(k => k.normHarga)),
-    fasilitas: Math.max(...normalized.map(k => k.normFasilitas)),
-    waktu: Math.min(...normalized.map(k => k.normWaktu)),
-    luas: Math.max(...normalized.map(k => k.normLuas)),
-    keamanan: Math.max(...normalized.map(k => k.normKeamanan))
+    harga: Math.min(...normalized.map(k => k.normHarga)), // Cost: min
+    fasilitas: Math.max(...normalized.map(k => k.normFasilitas)), // Benefit: max
+    luas: Math.max(...normalized.map(k => k.normLuas)), // Benefit: max
+    keamanan: Math.max(...normalized.map(k => k.normKeamanan)) // Benefit: max
   };
 
   const idealNegatif = {
-    harga: Math.max(...normalized.map(k => k.normHarga)),
-    fasilitas: Math.min(...normalized.map(k => k.normFasilitas)),
-    waktu: Math.max(...normalized.map(k => k.normWaktu)),
-    luas: Math.min(...normalized.map(k => k.normLuas)),
-    keamanan: Math.min(...normalized.map(k => k.normKeamanan))
+    harga: Math.max(...normalized.map(k => k.normHarga)), // Cost: max
+    fasilitas: Math.min(...normalized.map(k => k.normFasilitas)), // Benefit: min
+    luas: Math.min(...normalized.map(k => k.normLuas)), // Benefit: min
+    keamanan: Math.min(...normalized.map(k => k.normKeamanan)) // Benefit: min
   };
 
+  // Hitung jarak & TOPSIS Score
   return normalized.map(kos => {
     const dPositif = Math.sqrt(
       Math.pow(kos.normHarga - idealPositif.harga, 2) +
       Math.pow(kos.normFasilitas - idealPositif.fasilitas, 2) +
-      Math.pow(kos.normWaktu - idealPositif.waktu, 2) +
       Math.pow(kos.normLuas - idealPositif.luas, 2) +
       Math.pow(kos.normKeamanan - idealPositif.keamanan, 2)
     );
@@ -86,7 +87,6 @@ export const hitungTOPSIS = (data, bobot) => {
     const dNegatif = Math.sqrt(
       Math.pow(kos.normHarga - idealNegatif.harga, 2) +
       Math.pow(kos.normFasilitas - idealNegatif.fasilitas, 2) +
-      Math.pow(kos.normWaktu - idealNegatif.waktu, 2) +
       Math.pow(kos.normLuas - idealNegatif.luas, 2) +
       Math.pow(kos.normKeamanan - idealNegatif.keamanan, 2)
     );

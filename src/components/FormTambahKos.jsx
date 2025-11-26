@@ -1,34 +1,29 @@
 import React, { useState } from 'react';
-import { fasilitasOptions, luasKamarOptions, keamananOptions } from '../data/initialData';
+import { hargaOptions, fasilitasOptions, luasKamarOptions, keamananOptions } from '../data/initialData';
 
 const FormTambahKos = ({ onAdd, onCancel }) => {
   const [formData, setFormData] = useState({
-    nama: '',
-    harga: '',
-    fasilitas: '3',
-    waktuTempuh: '',
-    luasKamar: '12',
-    keamanan: '3'
+    nama_kos: '',
+    alamat: '',
+    harga: '< Rp. 750.000',
+    fasilitas: 'Kasur, Lemari, Meja, Dapur, Kipas Angin',
+    luas_kamar: '3 x 4',
+    keamanan: 'Kunci Kamar, Pagar, Gembok'
   });
 
   const handleSubmit = () => {
-    if (formData.nama && formData.harga && formData.waktuTempuh && formData.luasKamar) {
-      onAdd({
-        ...formData,
-        harga: parseInt(formData.harga),
-        fasilitas: parseInt(formData.fasilitas),
-        waktuTempuh: parseInt(formData.waktuTempuh),
-        luasKamar: parseInt(formData.luasKamar),
-        keamanan: parseInt(formData.keamanan)
-      });
+    if (formData.nama_kos && formData.alamat) {
+      onAdd(formData);
       setFormData({
-        nama: '',
-        harga: '',
-        fasilitas: '3',
-        waktuTempuh: '',
-        luasKamar: '12',
-        keamanan: '3'
+        nama_kos: '',
+        alamat: '',
+        harga: '< Rp. 750.000',
+        fasilitas: 'Kasur, Lemari, Meja, Dapur, Kipas Angin',
+        luas_kamar: '3 x 4',
+        keamanan: 'Kunci Kamar, Pagar, Gembok'
       });
+    } else {
+      alert('Nama kos dan alamat harus diisi!');
     }
   };
 
@@ -37,26 +32,40 @@ const FormTambahKos = ({ onAdd, onCancel }) => {
       <h3 className="text-lg font-semibold mb-4">Tambah Kos Baru</h3>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Nama Kos</label>
+          <label className="block text-sm font-medium mb-1">Nama Kos *</label>
           <input
             type="text"
             required
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.nama}
-            onChange={(e) => setFormData({...formData, nama: e.target.value})}
-            placeholder="Contoh: Kos Mawar"
+            value={formData.nama_kos}
+            onChange={(e) => setFormData({...formData, nama_kos: e.target.value})}
+            placeholder="Contoh: Kos Mawar Indah"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Harga Sewa (Rp/bulan)</label>
+          <label className="block text-sm font-medium mb-1">Alamat *</label>
           <input
-            type="number"
+            type="text"
             required
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={formData.alamat}
+            onChange={(e) => setFormData({...formData, alamat: e.target.value})}
+            placeholder="Jl. Contoh No. 123"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Harga</label>
+          <select
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={formData.harga}
             onChange={(e) => setFormData({...formData, harga: e.target.value})}
-            placeholder="500000"
-          />
+          >
+            {hargaOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Fasilitas</label>
@@ -73,22 +82,11 @@ const FormTambahKos = ({ onAdd, onCancel }) => {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Waktu Tempuh ke Kampus (menit)</label>
-          <input
-            type="number"
-            required
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.waktuTempuh}
-            onChange={(e) => setFormData({...formData, waktuTempuh: e.target.value})}
-            placeholder="10"
-          />
-        </div>
-        <div>
           <label className="block text-sm font-medium mb-1">Luas Kamar</label>
           <select
             className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.luasKamar}
-            onChange={(e) => setFormData({...formData, luasKamar: e.target.value})}
+            value={formData.luas_kamar}
+            onChange={(e) => setFormData({...formData, luas_kamar: e.target.value})}
           >
             {luasKamarOptions.map(option => (
               <option key={option.value} value={option.value}>
