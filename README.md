@@ -3,7 +3,7 @@
 Sistem Pendukung Keputusan (SPK) berbasis web untuk membantu mahasiswa Universitas Jember dalam memilih tempat kos yang sesuai dengan preferensi mereka menggunakan metode **SAW (Simple Additive Weighting)** dan **TOPSIS (Technique for Order Preference by Similarity to Ideal Solution)**.
 
 ## 🔗 Demo
-**Live Website:** [https://spk-pemilihan-kos.vercel.app/](https://spk-pemilihan-kos.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Website-blue?style=for-the-badge&logo=vercel)](https://spk-pemilihan-kos.vercel.app/)
 
 ## 📋 Deskripsi Proyek
 
