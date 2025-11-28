@@ -71,9 +71,7 @@ Berdasarkan analisis Mean Squared Error (MSE) terhadap 55 data karakteristik kos
 
 3. **Jalankan development server**
 ```bash
-   npm run dev
-   # atau
-   yarn dev
+   npm start
 ```
 
 4. **Buka browser**
