@@ -79,21 +79,6 @@ Berdasarkan analisis Mean Squared Error (MSE) terhadap 55 data karakteristik kos
    http://localhost:3000
 ```
 
-## 📁 Struktur Proyek
-```
-spk-pemilihan-kos/
-├── src/
-│   ├── components/        # Komponen React
-│   ├── utils/
-│   │   ├── converter.js      # Konversi kategori ke numerik
-│   │   ├── calculations.js   # Implementasi SAW & TOPSIS
-│   │   └── searchAlgorithm.js # Logika pencarian kos
-│   ├── pages/            # Halaman aplikasi
-│   └── styles/           # File styling
-├── public/               # Asset publik
-└── package.json
-```
-
 ## 🔐 Akses Admin
 
 Untuk mengakses dashboard admin:
