@@ -1,10 +1,8 @@
 import { konversiKosData } from './converter';
-
 // Fungsi Perhitungan SAW (4 Kriteria)
 export const hitungSAW = (data, bobot) => {
   // Konversi text ke numerik
   const convertedData = konversiKosData(data);
-  
   // Normalisasi
   const normalized = convertedData.map(kos => {
     const minHarga = Math.min(...convertedData.map(k => k.hargaNumerik));

@@ -1,5 +1,4 @@
-// Konversi TEXT kategori → Nilai Numerik (1-5)
-
+// Konversi Teks kategori menjadi Nilai Numerik (1-5)
 export const konversiHarga = (hargaText) => {
   const mapping = {
     '≤ Rp. 300.000': 5,

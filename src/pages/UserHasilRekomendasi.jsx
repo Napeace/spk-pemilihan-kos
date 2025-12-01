@@ -5,25 +5,16 @@ const UserHasilRekomendasi = ({ hasilData, selectedKriteria, bobot, onBackToHome
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Hitung MSE untuk menentukan metode terbaik
-  const hitungMSE = (data, metode) => {
-    const scores = data.map(d => metode === 'SAW' ? d.sawScore : d.topsisScore);
-    const mean = scores.reduce((sum, s) => sum + s, 0) / scores.length;
-    const mse = scores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) / scores.length;
-    return mse;
-  };
-
-  const mseSAW = hitungMSE(hasilData, 'SAW');
-  const mseTOPSIS = hitungMSE(hasilData, 'TOPSIS');
-  const metodeTerbaik = mseSAW < mseTOPSIS ? 'SAW' : 'TOPSIS';
-
-  // Sort berdasarkan metode terbaik (SEMUA DATA, tidak slice)
+  // Sort berdasarkan similarity (primary), lalu SAW score (secondary)
   const sortedData = [...hasilData].sort((a, b) => {
-    if (metodeTerbaik === 'SAW') {
-      return b.sawScore - a.sawScore;
-    } else {
-      return b.topsisScore - a.topsisScore;
+    // Jika ada similarity score, urutkan berdasarkan itu (tertinggi dulu)
+    if (a.similarity !== undefined && b.similarity !== undefined) {
+      if (Math.abs(a.similarity - b.similarity) > 0.01) {
+        return b.similarity - a.similarity;
+      }
     }
+    // Jika similarity sama atau tidak ada, urutkan berdasarkan SAW score
+    return b.sawScore - a.sawScore;
   });
 
   // Hitung pagination
@@ -82,19 +73,13 @@ const UserHasilRekomendasi = ({ hasilData, selectedKriteria, bobot, onBackToHome
           </div>
         </div>
 
-        {/* Info Metode Terbaik */}
-        <div className={`border-l-4 p-4 rounded-lg mb-8 ${
-          metodeTerbaik === 'SAW' 
-            ? 'bg-blue-50 border-blue-500' 
-            : 'bg-green-50 border-green-500'
-        }`}>
-          <h4 className={`font-semibold mb-2 ${
-            metodeTerbaik === 'SAW' ? 'text-blue-900' : 'text-green-900'
-          }`}>
-            🎯 Menggunakan Metode {metodeTerbaik}
+        {/* Info Metode SAW */}
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-8">
+          <h4 className="font-semibold mb-2 text-blue-900">
+            🎯 Menggunakan Metode SAW (Simple Additive Weighting)
           </h4>
           <p className="text-sm text-gray-700">
-            Metode {metodeTerbaik} dipilih karena memiliki nilai MSE lebih kecil ({metodeTerbaik === 'SAW' ? mseSAW.toFixed(6) : mseTOPSIS.toFixed(6)}) yang menandakan hasil lebih akurat.
+            Sistem menggunakan metode SAW untuk memberikan rekomendasi kos terbaik berdasarkan kriteria dan bobot yang telah ditentukan.
           </p>
         </div>
 
@@ -134,11 +119,16 @@ const UserHasilRekomendasi = ({ hasilData, selectedKriteria, bobot, onBackToHome
                     </div>
                     <div className="text-right">
                       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full">
-                        <p className="text-xs">Skor {metodeTerbaik}</p>
+                        <p className="text-xs">Skor SAW</p>
                         <p className="text-xl font-bold">
-                          {metodeTerbaik === 'SAW' ? kos.sawScore.toFixed(4) : kos.topsisScore.toFixed(4)}
+                          {kos.sawScore.toFixed(4)}
                         </p>
                       </div>
+                      {kos.similarity !== undefined && (
+                        <div className="mt-2 text-xs text-gray-600">
+                          Kemiripan: {kos.similarity.toFixed(1)}%
+                        </div>
+                      )}
                     </div>
                   </div>
 

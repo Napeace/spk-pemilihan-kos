@@ -7,8 +7,6 @@ import {
 import { hitungSAW, hitungTOPSIS } from './calculations';
 
 export const findKosByCriteria = (kosData, kriteria, bobot) => {
-  console.log('🔍 Searching with criteria:', kriteria);
-
   // Convert user criteria to numeric
   const userNumerik = {
     harga: konversiHarga(kriteria.harga),
@@ -16,8 +14,6 @@ export const findKosByCriteria = (kosData, kriteria, bobot) => {
     luasKamar: konversiLuasKamar(kriteria.luasKamar),
     keamanan: konversiKeamanan(kriteria.keamanan)
   };
-
-  console.log('👤 User criteria (numeric):', userNumerik);
 
   // Step 1: Find exact matches
   const exactMatch = kosData.filter(kos => {
@@ -29,19 +25,14 @@ export const findKosByCriteria = (kosData, kriteria, bobot) => {
     );
   });
 
-  console.log('📋 Exact matches:', exactMatch.length);
-
   let dataToProcess = [];
   let matchType = 'exact';
   let avgSimilarity = 100;
 
   if (exactMatch.length > 0) {
     dataToProcess = exactMatch;
-    console.log('✅ Using exact matches');
   } else {
-    // Step 2: Calculate similarity for all kos
-    console.log('⚠️ No exact match, calculating similarity...');
-    
+    // Step 2: Calculate similarity for all kos    
     const kosWithSimilarity = kosData.map(kos => {
       const kosNumerik = {
         harga: konversiHarga(kos.harga),
@@ -90,7 +81,7 @@ export const findKosByCriteria = (kosData, kriteria, bobot) => {
     };
   }
 
-  // Calculate SAW & TOPSIS
+  // Calculate SAW & TOPSIS (both needed for admin)
   const sawResults = hitungSAW(dataToProcess, bobot);
   const topsisResults = hitungTOPSIS(dataToProcess, bobot);
 
@@ -106,7 +97,7 @@ export const findKosByCriteria = (kosData, kriteria, bobot) => {
     };
   });
 
-  // Add rankings
+  // Add rankings (for admin compatibility)
   const sortedBySAW = [...combined].sort((a, b) => b.sawScore - a.sawScore);
   const sortedByTOPSIS = [...combined].sort((a, b) => b.topsisScore - a.topsisScore);
 
