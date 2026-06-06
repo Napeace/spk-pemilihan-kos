@@ -1,9 +1,9 @@
 // Opsi untuk dropdown (sesuai requirement PDF)
 export const hargaOptions = [
-  { value: '≥ Rp. 1.000.000', label: '≥ Rp. 1.000.000' },
-  { value: '< Rp. 1.000.000', label: '< Rp. 1.000.000' },
-  { value: '< Rp. 750.000', label: '< Rp. 750.000' },
-  { value: '< Rp. 500.000', label: '< Rp. 500.000' },
+  { value: '> Rp. 1.000.000', label: '> Rp. 1.000.000' },
+  { value: 'Rp. 750.001 - Rp. 1.000.000', label: 'Rp. 750.001 - Rp. 1.000.000' },
+  { value: 'Rp. 500.001 - Rp. 750.000', label: 'Rp. 500.001 - Rp. 750.000' },
+  { value: 'Rp. 300.001 - Rp. 500.000', label: 'Rp. 300.001 - Rp. 500.000' },
   { value: '≤ Rp. 300.000', label: '≤ Rp. 300.000' }
 ];
 

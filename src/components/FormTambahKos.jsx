@@ -5,7 +5,7 @@ const FormTambahKos = ({ onAdd, onCancel }) => {
   const [formData, setFormData] = useState({
     nama_kos: '',
     alamat: '',
-    harga: '< Rp. 750.000',
+    harga: '< Rp. 500.001 - Rp. 750.000',
     fasilitas: 'Kasur, Lemari, Meja, Dapur, Kipas Angin',
     luas_kamar: '3 x 4',
     keamanan: 'Kunci Kamar, Pagar, Gembok'
@@ -17,7 +17,7 @@ const FormTambahKos = ({ onAdd, onCancel }) => {
       setFormData({
         nama_kos: '',
         alamat: '',
-        harga: '< Rp. 750.000',
+        harga: '< Rp. 500.001 - Rp. 750.000',
         fasilitas: 'Kasur, Lemari, Meja, Dapur, Kipas Angin',
         luas_kamar: '3 x 4',
         keamanan: 'Kunci Kamar, Pagar, Gembok'

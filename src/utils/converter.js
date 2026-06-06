@@ -2,12 +2,12 @@
 export const konversiHarga = (hargaText) => {
   const mapping = {
     '≤ Rp. 300.000': 5,
-    '< Rp. 500.000': 4,
-    '< Rp. 750.000': 3,
-    '< Rp. 1.000.000': 2,
-    '≥ Rp. 1.000.000': 1
+    'Rp. 300.001 - Rp. 500.000': 4,
+    'Rp. 500.001 - Rp. 750.000': 3,
+    'Rp. 750.001 - Rp. 1.000.000': 2,
+    '> Rp. 1.000.000': 1
   };
-  return mapping[hargaText] || 3; // default 3 jika tidak match
+  return mapping[hargaText] || 3;
 };
 
 export const konversiFasilitas = (fasilitasText) => {
